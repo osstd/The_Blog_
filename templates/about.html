@@ -1,0 +1,62 @@
+{% include "header.html" %}
+
+<!-- Page Header-->
+<header
+        class="masthead"
+        style="background-image: url('../static/assets/img/about-bg.jpg')"
+>
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="page-heading">
+                    <h1>About Me</h1>
+                    <span class="subheading">I'm Omar.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- Main Content-->
+<main class="mb-4">
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7 d-flex justify-content-center">
+                <img src="{{url_for('static', filename='assets/img/profile_photo.png')}}" alt="Your Photo"
+                     class="img-fluid rounded-circle" style="width: 315px; height: 315px;">
+            </div>
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <p>
+                    Passionate and driven, I am an individual with an unparalleled attention to detail who firmly
+                    believes in the
+                    value of hard work and tackling challenges head-on. I firmly believe that the most challenging
+                    endeavors lead
+                    to the most rewarding outcomes.
+                </p>
+                <p>
+                    A proud recipient of the Robert Forsyth prize and a graduate of McGill University with an M.Sc. in
+                    Structural
+                    Engineering, my professional journey has been marked by a commitment to excellence. I have honed a
+                    robust set
+                    of analytical and project management skills through my role as a Junior Engineer at D.L. Turner
+                    Consultants Inc.
+                    in Montreal and Ojdrovic Engineering Inc. in Toronto, where I was responsible for the coordination,
+                    structural
+                    analysis, and design of diverse residential and industrial buildings.
+                </p>
+                <p>
+                    Beyond my professional pursuits, I find joy in endurance training and recreational rock climbing. At
+                    McGill
+                    University, I served as the Teaching Assistants’ Representative of the Civil Engineering Graduate
+                    Student
+                    Society, demonstrating my commitment to both academic and social responsibilities. My love for
+                    global
+                    exploration and culinary adventures has fueled my passion for traveling and experiencing diverse
+                    cuisines.
+                </p>
+            </div>
+            <div class="text-center"><a href="http://www.oshemy.com" class="btn btn-custom btn-primary btn-lg mt-3">Portfolio</a></div>
+        </div>
+    </div>
+</main>
+
+{% include "footer.html" %}

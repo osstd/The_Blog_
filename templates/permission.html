@@ -1,0 +1,43 @@
+{% block content %}
+{%include "header.html" %}
+
+<!-- Page Header -->
+<header
+        class="masthead"
+        style="background-image: url('../static/assets/img/user-bg.jpg')"
+>
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="page-heading">
+                    <h1>{{current_user.name}}</h1>
+                    <span class="subheading">Summary of requests</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="mb-4">
+    <div class="container">
+        <div class="row">
+            <h2>Post permission requests:</h2>
+            <div>
+
+                <p>The following user(s) have requested permission to post:</p>
+                {% if users: %}
+                {% for user in users: %}
+                <ul>
+                    <li>Name: {{user.name}}, Email: {{user.email}}, Process: <a
+                            href="{{url_for('process_posting',user_id=user.id,user_allow=1)}}">Allow</a> <a
+                            href="{{url_for('process_posting',user_id=user.id, user_allow=0)}}">Deny</a></li>
+                </ul>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

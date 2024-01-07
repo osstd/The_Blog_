@@ -1,0 +1,128 @@
+{% from "bootstrap5/form.html" import render_form %} {% block content %} {%
+include "header.html" %}
+
+<!-- Page Header -->
+<header
+        class="masthead"
+        style="background-image: url('../static/assets/img/user-bg.jpg')"
+>
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="page-heading">
+                    <h1>{{user.name}}</h1>
+                    <span class="subheading">Summary of your comments and ratings</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="mb-4">
+    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <p class="flashes">
+                <strong>Error: {{ message}}</strong>
+            </p>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+
+            {% if user.add_post: %}
+
+            <h2 style="margin-top: 15px; margin-bottom:15px">Posts</h2>
+            <ul>
+                {% for post in user.posts %}
+                <li><a href="{{ url_for('show_post', post_id=post.id) }}"> {{ post.title }} <a
+                        href="{{url_for('delete_post', post_id=post.id) }}">, to delete post: ✘</a> </a></li>
+                {% endfor %}
+            </ul>
+
+            {% endif %}
+
+            <h2 style="margin-top: 15px; margin-bottom:15px">Comments </h2>
+            {% if not user.comments: %}
+            <p>You have not commented on any posts yet.</p>
+            {% else: %}
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <table class="table text-center">
+                            <thead>
+                            <tr>
+                                <th>Comment</th>
+                                <th>Post</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for comment in user.comments %}
+                            <tr>
+                                <td>{{ comment.text|striptags }}</td>
+                                <td><a href="{{ url_for('show_post', post_id=comment.post_id) }}">{{
+                                    comment.parent_post.title }}</a></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">
+                                    <a type="button" class="btn btn-warning"
+                                       href="{{url_for('edit_comment', comment_id=comment.id)}}">Edit</a>
+                                </td>
+                                <td class="text-center">
+                                    <a type="button" class="btn btn-danger"
+                                       href="{{url_for('delete_comment', comment_id=comment.id) }}">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <h2 style="margin-top: 15px; margin-bottom:15px">Ratings</h2>
+            {% if not user.ratings: %}
+            <p>You have not rated any posts yet.</p>
+            {% else: %}
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <table class="table text-center">
+                            <thead>
+                            <tr>
+                                <th>Rating</th>
+                                <th>Post</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for rating in user.ratings %}
+                            <tr>
+                                <td>{{ rating.value }}</td>
+                                <td><a href="{{ url_for('show_post', post_id=rating.post_id) }}">{{
+                                    rating.parent_post.title }}</a></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a type="button" class="btn btn-warning"
+                                       href="{{url_for('edit_rating', rating_id=rating.id)}}">Edit</a>
+                                </td>
+                                <td>
+                                    <a type="button" class="btn btn-danger"
+                                       href="{{url_for('delete_rating', rating_id=rating.id) }}">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</main>
+
+{% include "footer.html" %} {% endblock %}
