@@ -10,6 +10,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm, RatingForm
+from email.mime.text import MIMEText
 import smtplib
 from twilio.rest import Client
 import os
@@ -404,10 +405,11 @@ def contact():
         phone = request.form['phone']
         email = request.form['email']
         message = request.form['message']
-        send_email(
-            message=f"Subject: New Question from The Blog from {name}\n\nName: {name}\nEmail: {email}\nPhone: {phone}"
-                    f"\nMessage: "
-                    f"\n{message}", user_email=None)
+        subject = f"New Question from The Blog from {name}"
+        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:\n{message}"
+        msg = MIMEText(body, 'plain', 'utf-8')
+        msg['Subject'] = subject
+        send_email(message=msg.as_string(), user_email=None)
         return render_template("contact.html", sent=True, logged_in=current_user.is_authenticated)
     return render_template('contact.html', logged_in=current_user.is_authenticated)
 
@@ -417,13 +419,18 @@ def send_email(message, user_email):
     password = os.environ.get("E_KEY")
     if not user_email:
         user_email = my_email
-    with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
-        connection.starttls()
-        connection.login(user=my_email, password=password)
-        connection.sendmail(from_addr=my_email,
-                            to_addrs=user_email,
-                            msg=message)
-        connection.close()
+    try:
+        with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+            connection.starttls()
+            connection.login(user=my_email, password=password)
+            connection.sendmail(from_addr=my_email,
+                                to_addrs=user_email,
+                                msg=message)
+            connection.close()
+    except smtplib.SMTPException as e:
+        return f"Error sending email: {e}"
+    except Exception as e:
+        return f"Unexpected error: {e}"
 
 
 def send_text(message):
