@@ -48,7 +48,7 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.get_or_404(User, user_id)
+    return db.get_or_404(UserBlog, user_id)
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
@@ -56,7 +56,7 @@ db = SQLAlchemy()
 db.init_app(app)
 
 
-class User(UserMixin, db.Model):
+class UserBlog(UserMixin, db.Model):
     __tablename__ = "users_blog"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
@@ -76,9 +76,9 @@ class BlogPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Create Foreign Key, "users.id" the users refers to the tablename of User.
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("users_blog.id"))
     # Create reference to the User object, the "posts" refers to the posts property in the User class.
-    author = relationship("User", back_populates="posts")
+    author = relationship("UserBlog", back_populates="posts")
 
     title = db.Column(db.String(250), unique=True, nullable=False)
     subtitle = db.Column(db.String(250), nullable=False)
@@ -95,10 +95,10 @@ class Comment(db.Model):
     __tablename__ = "comments"
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("users_blog.id"))
     # Add child relationship
     parent_post = relationship("BlogPost", back_populates="comments")
-    comment_author = relationship("User", back_populates="comments")
+    comment_author = relationship("UserBlog", back_populates="comments")
     text = db.Column(db.Text, nullable=False)
 
 
@@ -106,9 +106,9 @@ class Rating(db.Model):
     __tablename__ = "ratings"
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("users_blog.id"))
     parent_post = relationship("BlogPost", back_populates="ratings")
-    rating_author = relationship("User", back_populates="ratings")
+    rating_author = relationship("UserBlog", back_populates="ratings")
     value = db.Column(db.Float, nullable=False)
 
 
@@ -121,7 +121,7 @@ def register():
     form = RegisterForm()
     if request.method == "POST":
         email = request.form.get('email')
-        result = db.session.execute(db.select(User).where(User.email == email))
+        result = db.session.execute(db.select(UserBlog).where(UserBlog.email == email))
         if result.scalar():
             flash('Email already registered, login with email instead!')
             return redirect(url_for('login'))
@@ -131,7 +131,7 @@ def register():
                 method='pbkdf2:sha256',
                 salt_length=8
             )
-            new_user = User(
+            new_user = UserBlog(
                 email=email,
                 name=request.form.get('name'),
                 password=hash_and_salted_password,
@@ -151,7 +151,7 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        result = db.session.execute(db.select(User).where(User.email == email))
+        result = db.session.execute(db.select(UserBlog).where(UserBlog.email == email))
         user = result.scalar()
 
         if not user:
@@ -266,7 +266,7 @@ def edit_post(post_id):
 @app.route("/request-posting")
 @login_required
 def request_posting():
-    user_request = db.get_or_404(User, current_user.id)
+    user_request = db.get_or_404(UserBlog, current_user.id)
     user_request.request = True
     db.session.commit()
     send_email(
@@ -280,7 +280,7 @@ def request_posting():
 @app.route("/process-posting/<int:user_id>/<int:user_allow>", methods=['GET', 'POST'])
 @admin_only
 def process_posting(user_id, user_allow):
-    user_to_allow = db.get_or_404(User, user_id)
+    user_to_allow = db.get_or_404(UserBlog, user_id)
     if user_allow == 1:
         user_to_allow.add_post = True
         send_email(
@@ -302,7 +302,7 @@ def process_posting(user_id, user_allow):
 @app.route("/permission")
 @admin_only
 def permission():
-    records = db.session.execute(db.select(User))
+    records = db.session.execute(db.select(UserBlog))
     user_records = records.scalars().all()
     list_users_request = []
     for user in user_records:
