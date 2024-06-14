@@ -314,12 +314,26 @@ def permission():
 @app.route("/delete/<int:post_id>")
 @login_required
 def delete_post(post_id):
-    post_to_delete = db.get_or_404(BlogPost, post_id)
+    post_to_delete = db.session.get(BlogPost, post_id)
+    if post_to_delete is None:
+        flash('Post not found!')
+        return redirect(url_for('user'))
+
     if current_user.id == 1 or post_to_delete.author_id == current_user.id:
+        comments_to_delete = Comment.query.filter_by(post_id=post_id).all()
+        for comment in comments_to_delete:
+            db.session.delete(comment)
+
+        ratings_to_delete = Rating.query.filter_by(post_id=post_id).all()
+        for rating in ratings_to_delete:
+            db.session.delete(rating)
+
         db.session.delete(post_to_delete)
         db.session.commit()
+        flash('Post and its related comments and ratings have been deleted!')
     else:
         flash('You are not allowed to delete this post!')
+
     return redirect(url_for('user'))
 
 
