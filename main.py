@@ -330,7 +330,6 @@ def delete_post(post_id):
 
         db.session.delete(post_to_delete)
         db.session.commit()
-        flash('Post and its related comments and ratings have been deleted!')
     else:
         flash('You are not allowed to delete this post!')
 
