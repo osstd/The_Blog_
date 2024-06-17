@@ -19,10 +19,8 @@ import os
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # If id is not 1 then return abort with 403 error
         if current_user.id != 1:
             return abort(403)
-        # Otherwise continue with the route function
         return f(*args, **kwargs)
 
     return decorated_function
@@ -85,8 +83,7 @@ class BlogPost(db.Model):
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-    # Add parent relationship
-    # "comment_author" refers to the comment_author property in the Comment class.
+
     comments = relationship("Comment", back_populates="parent_post")
     ratings = relationship("Rating", back_populates="parent_post")
 
@@ -96,7 +93,6 @@ class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
     author_id = db.Column(db.Integer, db.ForeignKey("users_blog.id"))
-    # Add child relationship
     parent_post = relationship("BlogPost", back_populates="comments")
     comment_author = relationship("UserBlog", back_populates="comments")
     text = db.Column(db.Text, nullable=False)
@@ -160,7 +156,6 @@ def login():
             flash('Password incorrect, please try again.')
             return redirect(url_for('login'))
         else:
-            # user is logged in with Flask-Login
             login_user(user)
             return redirect(url_for('get_all_posts'))
     return render_template("login.html", form=form, logged_in=current_user.is_authenticated)
@@ -180,7 +175,6 @@ def get_all_posts():
                            current_user=current_user)
 
 
-# Allow logged-in users to comment on posts
 @app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
