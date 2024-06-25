@@ -1,55 +1,31 @@
-from datetime import date
-from statistics import mean
 from flask import Flask, abort, render_template, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import ValidationError
+from flask_wtf.csrf import CSRFProtect, validate_csrf, generate_csrf
+from flask_limiter import Limiter
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm, RatingForm
+from datetime import date
+from statistics import mean
 from email.mime.text import MIMEText
-import smtplib
 from twilio.rest import Client
+import requests
 import os
-
-
-def admin_only(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if current_user.id != 1:
-            return abort(403)
-        return f(*args, **kwargs)
-
-    return decorated_function
-
+import aiosmtplib
+import asyncio
+import re
+import html
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('F_KEY')
-ckeditor = CKEditor(app)
-Bootstrap5(app)
-
-gravatar = Gravatar(app,
-                    size=100,
-                    rating='g',
-                    default='retro',
-                    force_default=False,
-                    force_lower=False,
-                    use_ssl=False,
-                    base_url=None)
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return db.get_or_404(UserBlog, user_id)
-
-
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
+
 db = SQLAlchemy()
 db.init_app(app)
 
@@ -110,6 +86,62 @@ class Rating(db.Model):
 
 with app.app_context():
     db.create_all()
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.get_or_404(UserBlog, user_id)
+
+
+ckeditor = CKEditor(app)
+Bootstrap5(app)
+
+gravatar = Gravatar(app,
+                    size=100,
+                    rating='g',
+                    default='retro',
+                    force_default=False,
+                    force_lower=False,
+                    use_ssl=False,
+                    base_url=None)
+
+csrf = CSRFProtect(app)
+limiter = Limiter(
+    app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+site_key = os.environ.get('S_KEY')
+
+
+def admin_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.id != 1:
+            return abort(403)
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def verify_recaptcha(response):
+    secret_key = os.environ.get("G_KEY")
+    payload = {'secret': secret_key, 'response': response}
+    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload)
+    result = response.json()
+    return result.get('success', False)
+
+
+def validate_email(email):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email) is not None
+
+
+def sanitize_input(user_input):
+    return html.escape(user_input.strip())
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -263,10 +295,9 @@ def request_posting():
     user_request = db.get_or_404(UserBlog, current_user.id)
     user_request.request = True
     db.session.commit()
-    send_email(
-        message=f"Subject: New Request to post on The Blog from {current_user.name}\n\nName: {current_user.name}"
-                f"\nEmail: {current_user.email}\n",
-        user_email=None)
+    msg = MIMEText(f"Name: {current_user.name}\nEmail: {current_user.email}\n", 'plain', 'utf-8')
+    msg['Subject'] = f"New Request to post on The Blog from {current_user.name}"
+    asyncio.run(send_email_async(message=msg, user_email=None))
     send_text(message='You have a request to post pending.')
     return redirect(url_for('get_all_posts'))
 
@@ -277,15 +308,19 @@ def process_posting(user_id, user_allow):
     user_to_allow = db.get_or_404(UserBlog, user_id)
     if user_allow == 1:
         user_to_allow.add_post = True
-        send_email(
-            message=f"Subject: Your request to post have been accepted.\n\nHello, {user_to_allow.name},\nYour "
-                    f"request to add posts have been accepted.\nYou can start adding posts. \nSincerely,"
-                    f"\nThe Blog.", user_email=user_to_allow.email)
+        msg = MIMEText(
+            f"Hello {user_to_allow.name},\nYour request to add posts has been accepted.\nYou can start adding "
+            f"posts. \nSincerely,\nThe Blog.", 'plain', 'utf-8')
+        msg['Subject'] = "Your request to post has been accepted."
+        asyncio.run(send_email_async(
+            message=msg, user_email=user_to_allow.email))
     else:
-        send_email(
-            message=f"Subject: Your request to post have been denied.\n\nHello, {user_to_allow.name},\nPlease "
-                    f"note that your request to add posts has been denied at this time.\nSincerely,"
-                    f"\nThe Blog.", user_email=user_to_allow.email)
+        msg = MIMEText(
+            f"Hello {user_to_allow.name},\nPlease "
+            f"note that your request to add posts has been denied at this time. \nSincerely,\nThe Blog.", 'plain',
+            'utf-8')
+        msg['Subject'] = "Your request to post has been denied."
+        asyncio.run(send_email_async(message=msg, user_email=user_to_allow.email))
         if user_to_allow.add_post:
             user_to_allow.add_post = False
     user_to_allow.request = False
@@ -404,40 +439,66 @@ def about():
     return render_template("about.html", logged_in=current_user.is_authenticated)
 
 
-@app.route("/contact", methods=['GET', 'POST'])
-@login_required
-def contact():
-    if request.method == 'POST':
-        name = request.form['name']
-        phone = request.form['phone']
-        email = request.form['email']
-        message = request.form['message']
-        subject = f"New Question from The Blog from {name}"
-        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:\n{message}"
-        msg = MIMEText(body, 'plain', 'utf-8')
-        msg['Subject'] = subject
-        send_email(message=msg.as_string(), user_email=None)
-        return render_template("contact.html", sent=True, logged_in=current_user.is_authenticated)
-    return render_template('contact.html', logged_in=current_user.is_authenticated)
-
-
-def send_email(message, user_email):
+async def send_email_async(message, user_email):
     my_email = os.environ.get("E_ID")
     password = os.environ.get("E_KEY")
     if not user_email:
         user_email = my_email
+    message['From'] = my_email
+    message['To'] = user_email
+
     try:
-        with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
-            connection.starttls()
-            connection.login(user=my_email, password=password)
-            connection.sendmail(from_addr=my_email,
-                                to_addrs=user_email,
-                                msg=message)
-            connection.close()
-    except smtplib.SMTPException as e:
-        return f"Error sending email: {e}"
-    except Exception as e:
-        return f"Unexpected error: {e}"
+        await aiosmtplib.send(
+            message,
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+            username=my_email,
+            password=password
+        )
+        return True
+    except Exception as error:
+        print(f"Error sending email to {user_email}: {str(error)}")
+        return False
+
+
+@app.route("/contact", methods=['GET', 'POST'])
+@login_required
+@limiter.limit("5 per hour")
+def contact():
+    if request.method == 'POST':
+        recaptcha_response = request.form['g-recaptcha-response']
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+            if not verify_recaptcha(recaptcha_response):
+                return render_template('contact.html', result="reCAPTCHA verification failed. Please try again.",
+                                       logged_in=current_user.is_authenticated, success=False,
+                                       csrf_token=generate_csrf(), site_key=site_key, form=True)
+
+            name = sanitize_input(request.form.get('name'))
+            phone = sanitize_input(request.form.get('phone'))
+            email = sanitize_input(request.form.get('email'))
+            message = sanitize_input(request.form.get('message'))
+
+            if not name or not email or not phone or not message:
+                return render_template('contact.html', result="Please fill all required fields",
+                                       logged_in=current_user.is_authenticated, success=False)
+            if not validate_email(email):
+                return render_template('contact.html', result="Please enter a valid email address",
+                                       logged_in=current_user.is_authenticated, success=False)
+
+            subject = f"New Question from The Blog from {name}"
+            body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:\n{message}"
+            msg = MIMEText(body, 'plain', 'utf-8')
+            msg['Subject'] = subject
+            asyncio.run(send_email_async(msg, None))
+
+            return render_template('contact.html', result="Your message has been sent.",
+                                   success=True, logged_in=current_user.is_authenticated)
+        except ValidationError:
+            return render_template('contact.html', result="Invalid form submission.", success=False)
+    return render_template('contact.html', logged_in=current_user.is_authenticated, result=False,
+                           csrf_token=generate_csrf(), site_key=site_key, form=True)
 
 
 def send_text(message):
