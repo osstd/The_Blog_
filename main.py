@@ -4,8 +4,7 @@ from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-from wtforms import ValidationError
-from flask_wtf.csrf import CSRFProtect, validate_csrf, generate_csrf
+from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -145,6 +144,7 @@ def sanitize_input(user_input):
 
 
 @app.route('/register', methods=["GET", "POST"])
+@limiter.limit("5 per hour")
 def register():
     form = RegisterForm()
     if request.method == "POST":
@@ -173,6 +173,7 @@ def register():
 
 
 @app.route('/login', methods=["GET", "POST"])
+@limiter.limit("15 per hour")
 def login():
     form = LoginForm()
     if request.method == "POST":
@@ -243,6 +244,7 @@ def show_post(post_id):
 
 
 @app.route("/new-post", methods=["GET", "POST"])
+@limiter.limit("5 per hour")
 @login_required
 def add_new_post():
     if current_user.add_post:
@@ -264,6 +266,7 @@ def add_new_post():
 
 
 @app.route("/edit-post/<int:post_id>", methods=["GET", "POST"])
+@limiter.limit("15 per hour")
 @login_required
 def edit_post(post_id):
     post = db.get_or_404(BlogPost, post_id)
@@ -290,6 +293,7 @@ def edit_post(post_id):
 
 
 @app.route("/request-posting")
+@limiter.limit("3 per hour")
 @login_required
 def request_posting():
     user_request = db.get_or_404(UserBlog, current_user.id)
@@ -392,6 +396,7 @@ def delete_rating(rating_id):
 
 
 @app.route("/edit-comment/<int:comment_id>", methods=["GET", "POST"])
+@limiter.limit("15 per hour")
 @login_required
 def edit_comment(comment_id):
     comment_ids = [comment.id for comment in current_user.comments]
@@ -411,6 +416,7 @@ def edit_comment(comment_id):
 
 
 @app.route("/edit-rating/<int:rating_id>", methods=["GET", "POST"])
+@limiter.limit("15 per hour")
 @login_required
 def edit_rating(rating_id):
     rating_ids = [rating.id for rating in current_user.ratings]
@@ -463,42 +469,37 @@ async def send_email_async(message, user_email):
 
 
 @app.route("/contact", methods=['GET', 'POST'])
-@login_required
 @limiter.limit("5 per hour")
 def contact():
     if request.method == 'POST':
         recaptcha_response = request.form['g-recaptcha-response']
-        try:
-            validate_csrf(request.form.get('csrf_token'))
-            if not verify_recaptcha(recaptcha_response):
-                return render_template('contact.html', result="reCAPTCHA verification failed. Please try again.",
-                                       logged_in=current_user.is_authenticated, success=False,
-                                       csrf_token=generate_csrf(), site_key=site_key, form=True)
+        if not verify_recaptcha(recaptcha_response):
+            return render_template('contact.html', result="reCAPTCHA verification failed. Please try again.",
+                                   logged_in=current_user.is_authenticated, success=False, site_key=site_key, form=True)
 
-            name = sanitize_input(request.form.get('name'))
-            phone = sanitize_input(request.form.get('phone'))
-            email = sanitize_input(request.form.get('email'))
-            message = sanitize_input(request.form.get('message'))
+        name = sanitize_input(request.form.get('name'))
+        phone = sanitize_input(request.form.get('phone'))
+        email = sanitize_input(request.form.get('email'))
+        message = sanitize_input(request.form.get('message'))
 
-            if not name or not email or not phone or not message:
-                return render_template('contact.html', result="Please fill all required fields",
-                                       logged_in=current_user.is_authenticated, success=False)
-            if not validate_email(email):
-                return render_template('contact.html', result="Please enter a valid email address",
-                                       logged_in=current_user.is_authenticated, success=False)
+        if not name or not email or not phone or not message:
+            return render_template('contact.html', result="Please fill all required fields",
+                                   logged_in=current_user.is_authenticated, success=False)
+        if not validate_email(email):
+            return render_template('contact.html', result="Please enter a valid email address",
+                                   logged_in=current_user.is_authenticated, success=False)
 
-            subject = f"New Question from The Blog from {name}"
-            body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:\n{message}"
-            msg = MIMEText(body, 'plain', 'utf-8')
-            msg['Subject'] = subject
-            asyncio.run(send_email_async(msg, None))
+        subject = f"New Question from The Blog from {name}"
+        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:\n{message}"
+        msg = MIMEText(body, 'plain', 'utf-8')
+        msg['Subject'] = subject
+        asyncio.run(send_email_async(msg, None))
 
-            return render_template('contact.html', result="Your message has been sent.",
-                                   success=True, logged_in=current_user.is_authenticated)
-        except ValidationError:
-            return render_template('contact.html', result="Invalid form submission.", success=False)
+        return render_template('contact.html', result="Your message has been sent.",
+                               success=True, logged_in=current_user.is_authenticated)
+
     return render_template('contact.html', logged_in=current_user.is_authenticated, result=False,
-                           csrf_token=generate_csrf(), site_key=site_key, form=True)
+                           site_key=site_key, form=True)
 
 
 def send_text(message):
