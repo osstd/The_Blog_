@@ -1,0 +1,52 @@
+{% from "bootstrap5/form.html" import render_form %} {% block content %} {%
+include "header.html" %}
+
+<!-- Page Header -->
+<header
+        class="masthead"
+        style="background-image: url('../static/assets/img/register-bg.jpg')"
+>
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="page-heading">
+                    <h1>Request Posting</h1>
+                    <span class="subheading">Submit Your Request!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="mb-4">
+    <div class="container">
+        <div class="row">
+            <div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert {% if category == 'error' %} alert-danger {% elif category == 'success' %} alert-success {% elif category == 'warning' %} alert-warning {% endif %}">
+                    {{message}}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div>
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group my-2">
+                        {{ form.reason.label(class="form-control-label") }}
+                        {{ form.reason(class="form-control") }}
+                    </div>
+                    <div class="form-group my-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                    <div class="g-recaptcha" data-sitekey="{{site_key}}"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% include "footer.html" %} {% endblock %}

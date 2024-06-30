@@ -22,24 +22,24 @@
         <div class="col-md-10 col-lg-8 col-xl-7">
             {% for post in all_posts: %}
             <div class="post-preview">
-                <a href="{{ url_for('show_post', post_id=post.id) }}">
+                <a href="{{ url_for('main.show_post', post_id=post.id) }}">
                     <h2 class="post-title">{{ post.title }}</h2>
                     <h3 class="post-subtitle">{{ post.subtitle }}</h3>
                 </a>
                 <p class="post-meta">
                     {% if post.author_id==1: %}
-                    Posted by <a href="{{url_for('about')}}">{{post.author.name}}</a> on {{post.date}}
+                    Posted by <a href="{{url_for('main.about')}}">{{post.author.name}}</a> on {{post.date}}
                     {% else: %}
                     {% if current_user.id ==1 and post.author.add_post: %}
                     Posted by {{post.author.name}}<a
-                        href="{{url_for('process_posting', user_id=post.author_id, user_allow=0)}}"> < Revoke
+                        href="{{url_for('main.process_posting', user_id=post.author_id, user_allow=0)}}"> < Revoke
                     Permissions > </a> on {{post.date}}
                     {% else: %}
                     Posted by {{post.author.name}} on {{post.date}}
                     {% endif %}
                     {% endif %}
                     {% if current_user.id==1 or post.author_id==current_user.id: %}
-                    <a href="{{url_for('delete_post', post_id=post.id) }}">✘</a>
+                    <a href="{{url_for('main.delete_post', post_id=post.id) }}">✘</a>
                     {% endif %}
                 </p>
             </div>
@@ -53,7 +53,7 @@
             <div class="d-flex justify-content-end mb-4">
                 <a
                         class="btn btn-primary float-right"
-                        href="{{url_for('request_posting')}}"
+                        href="{{url_for('main.request_posting')}}"
                 >Request Permission to Post</a
                 >
             </div>
@@ -62,7 +62,7 @@
             <div class="d-flex justify-content-end mb-4">
                 <a
                         class="btn btn-primary float-right"
-                        href="{{url_for('add_new_post')}}"
+                        href="{{url_for('main.add_new_post')}}"
                 >Create New Post</a
                 >
             </div>

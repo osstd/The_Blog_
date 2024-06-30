@@ -31,13 +31,23 @@
                 <div class="d-flex justify-content-end mb-4">
                     <a
                             class="btn btn-primary float-right"
-                            href="{{url_for('edit_post', post_id=post.id)}}"
+                            href="{{url_for('main.edit_post', post_id=post.id)}}"
                     >Edit Post</a
                     >
                 </div>
                 {% endif %}
 
-                <!-- Comments Area -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert {% if category == 'error' %} alert-danger {% elif category == 'success' %} alert-success {% endif %}">
+                    {{message}}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <!-- Comments and Ratings Area -->
                 {{ ckeditor.load() }}
                 <!-- Configure it with the name of the form field from CommentForm -->
                 {{ ckeditor.config(name='comment_text') }}
@@ -51,19 +61,19 @@
                     {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
 
                     <ul class="commentList">
-                        {% for comment in post.comments: %}
+                        {% for comment in post.comments %}
                         <li>
                             <div class="commenterImage">
                                 <img src="{{ comment.comment_author.email | gravatar }}"/>
                             </div>
                             <div class="commentText">
-                                <a href="{{url_for('edit_comment', comment_id=comment.id)}}">{{comment.text|safe}}
-                                    {% if comment.author_id == current_user.id %}
-                                    <a href="{{url_for('user')}}"><span class="date sub-text">{{comment.comment_author.name}}</span></a>
-                                    <a href="{{url_for('delete_comment', comment_id=comment.id) }}">, to delete: ✘</a>
-                                    {% else %}
-                                    <span class="date sub-text">{{comment.comment_author.name}}</span>
-                                    {% endif %}
+                                <a href="{{url_for('main.edit_comment', comment_id=comment.id)}}">{{comment.text|safe}}</a>
+                                {% if comment.author_id == current_user.id %}
+                                <a href="{{url_for('main.user')}}"><span class="date sub-text">{{comment.comment_author.name}}</span></a>
+                                <a href="{{url_for('main.delete_comment', comment_id=comment.id) }}">, to delete: ✘</a>
+                                {% else %}
+                                <span class="date sub-text">{{comment.comment_author.name}}</span>
+                                {% endif %}
                             </div>
                         </li>
                         {% endfor %}

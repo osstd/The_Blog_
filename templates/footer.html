@@ -13,14 +13,6 @@
                         </a>
                     </li>
                     <li class="list-inline-item">
-                        <a href="https://github.com/osstd?tab=repositories">
-                                  <span class="fa-stack fa-lg">
-                                      <i class="fas fa-circle fa-stack-2x"></i>
-                                      <i class="fab fa-github fa-stack-1x fa-inverse"></i>
-                                  </span>
-                        </a>
-                    </li>
-                    <li class="list-inline-item">
                         <a href="https://twitter.com/__shemy">
                                   <span class="fa-stack fa-lg">
                                       <i class="fas fa-circle fa-stack-2x"></i>
@@ -32,7 +24,7 @@
                 <div class="small text-center text-muted fst-italic">Copyright &copy;The Blog <span
                         id="currentYear"></span></div>
                 {% if current_user.name %}
-                <div class="small text-center text-muted">You are logged in as <a href="{{url_for('user')}}">{{current_user.name}}</a>
+                <div class="small text-center text-muted">You are logged in as <a href="{{url_for('main.user')}}">{{current_user.name}}</a>
                 </div>
                 {% endif %}
             </div>
@@ -44,6 +36,7 @@
 
 <!-- Core theme JS-->
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
 
 {% if form %}
 <!--reCapcha js-->

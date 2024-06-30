@@ -53,3 +53,7 @@
   color: #ee6f57;
   text-align: center;
 }
+
+.max-content {
+  width: max-content;
+}

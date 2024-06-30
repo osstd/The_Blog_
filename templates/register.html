@@ -3,29 +3,66 @@ include "header.html" %}
 
 <!-- Page Header -->
 <header
-        class="masthead"
-        style="background-image: url('../static/assets/img/register-bg.jpg')"
+  class="masthead"
+  style="background-image: url('../static/assets/img/register-bg.jpg')"
 >
-    <div class="container position-relative px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <div class="page-heading">
-                    <h1>Register</h1>
-                    <span class="subheading">Start Contributing to the Blog!</span>
-                </div>
-            </div>
+  <div class="container position-relative px-4 px-lg-5">
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-7">
+        <div class="page-heading">
+          <h1>Register</h1>
+          <span class="subheading">Start Contributing to the Blog!</span>
         </div>
+      </div>
     </div>
+  </div>
 </header>
 
 <main class="mb-4">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-md-10 mx-auto">
-                {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
-            </div>
-        </div>
-    </div>
-</main>
+  <div class="container">
+    <div class="row">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert {% if category == 'error' %} alert-danger {% elif category == 'success' %} alert-success {% endif %}"
+      >
+        {{message}}
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
 
+      <div class="col-lg-8 col-md-10 mx-auto">
+        {{ render_form(form, novalidate=True, button_map={"submit": "primary"})
+        }}
+      </div>
+      <div
+        id="passwordRequirements"
+        style="display: none"
+        class="col-lg-8 col-md-10 mx-auto mt-3"
+      >
+        <span>Password Requirements:</span>
+        <ul>
+          <li>At least 8 characters long</li>
+          <li>Contains at least one uppercase letter</li>
+          <li>Contains at least one lowercase letter</li>
+          <li>Contains at least one digit</li>
+          <li>Contains at least one special character</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let passwordField = document.getElementById("passwordField");
+    let passwordRequirements = document.getElementById("passwordRequirements");
+
+    passwordField.addEventListener("mouseover", function () {
+      passwordRequirements.style.display = "block";
+    });
+
+    passwordField.addEventListener("mouseout", function () {
+      passwordRequirements.style.display = "none";
+    });
+  });
+</script>
 {% include "footer.html" %} {% endblock %}
