@@ -8,6 +8,8 @@ class Config:
     RECAPTCHA_SECRET_KEY = os.environ.get("G_KEY")
     EMAIL_HOST = "smtp.gmail.com"
     EMAIL_PORT = 587
+    CKEDITOR_SERVE_LOCAL = True
+    CKEDITOR_VERSION = '4.24.0-lts'
     EMAIL_USERNAME = os.environ.get("E_ID")
     EMAIL_PASSWORD = os.environ.get("E_KEY")
     TWILIO_ACCOUNT_SID = os.environ.get('A_ID')

@@ -22,7 +22,7 @@
         <div class="col-md-10 col-lg-8 col-xl-7">
             {% for post in all_posts: %}
             <div class="post-preview">
-                <a href="{{ url_for('main.show_post', post_id=post.id) }}">
+                <a href="{{ url_for('post.show_post', post_id=post.id) }}">
                     <h2 class="post-title">{{ post.title }}</h2>
                     <h3 class="post-subtitle">{{ post.subtitle }}</h3>
                 </a>
@@ -39,7 +39,7 @@
                     {% endif %}
                     {% endif %}
                     {% if current_user.id==1 or post.author_id==current_user.id: %}
-                    <a href="{{url_for('main.delete_post', post_id=post.id) }}">✘</a>
+                    <a href="{{url_for('post.delete_post', post_id=post.id) }}">✘</a>
                     {% endif %}
                 </p>
             </div>
@@ -62,7 +62,7 @@
             <div class="d-flex justify-content-end mb-4">
                 <a
                         class="btn btn-primary float-right"
-                        href="{{url_for('main.add_new_post')}}"
+                        href="{{url_for('post.add_new_post')}}"
                 >Create New Post</a
                 >
             </div>

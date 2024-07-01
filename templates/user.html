@@ -39,13 +39,13 @@ include "header.html" %}
             <h2 style="margin-top: 15px; margin-bottom:15px">Posts</h2>
             {% if not user.posts %}
             <div class="mx-3">
-                <a class="btn btn-primary max-content" href="{{url_for('main.add_new_post')}}">New Post</a>
+                <a class="btn btn-primary max-content" href="{{url_for('post.add_new_post')}}">New Post</a>
             </div>
             {% endif %}
             <ul>
                 {% for post in user.posts %}
-                <li><a href="{{ url_for('main.show_post', post_id=post.id) }}"> {{ post.title }} <a
-                        href="{{url_for('main.delete_post', post_id=post.id) }}">, to delete post: ✘</a> </a></li>
+                <li><a href="{{ url_for('post.show_post', post_id=post.id) }}"> {{ post.title }} <a
+                        href="{{url_for('post.delete_post', post_id=post.id) }}">, to delete post: ✘</a> </a></li>
                 {% endfor %}
             </ul>
             {% else %}
@@ -79,17 +79,17 @@ include "header.html" %}
                             {% for comment in user.comments %}
                             <tr>
                                 <td>{{ comment.text|striptags }}</td>
-                                <td><a href="{{ url_for('main.show_post', post_id=comment.post_id) }}">{{
+                                <td><a href="{{ url_for('post.show_post', post_id=comment.post_id) }}">{{
                                     comment.parent_post.title }}</a></td>
                             </tr>
                             <tr>
                                 <td class="text-center">
                                     <a type="button" class="btn btn-warning"
-                                       href="{{url_for('main.edit_comment', comment_id=comment.id)}}">Edit</a>
+                                       href="{{url_for('comment.edit_comment', comment_id=comment.id)}}">Edit</a>
                                 </td>
                                 <td class="text-center">
                                     <a type="button" class="btn btn-danger"
-                                       href="{{url_for('main.delete_comment', comment_id=comment.id) }}">Delete</a>
+                                       href="{{url_for('comment.delete_comment', comment_id=comment.id) }}">Delete</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -118,17 +118,17 @@ include "header.html" %}
                             {% for rating in user.ratings %}
                             <tr>
                                 <td>{{ rating.value }}</td>
-                                <td><a href="{{ url_for('main.show_post', post_id=rating.post_id) }}">{{
+                                <td><a href="{{ url_for('post.show_post', post_id=rating.post_id) }}">{{
                                     rating.parent_post.title }}</a></td>
                             </tr>
                             <tr>
                                 <td>
                                     <a type="button" class="btn btn-warning"
-                                       href="{{url_for('main.edit_rating', rating_id=rating.id)}}">Edit</a>
+                                       href="{{url_for('rating.edit_rating', rating_id=rating.id)}}">Edit</a>
                                 </td>
                                 <td>
                                     <a type="button" class="btn btn-danger"
-                                       href="{{url_for('main.delete_rating', rating_id=rating.id) }}">Delete</a>
+                                       href="{{url_for('rating.delete_rating', rating_id=rating.id) }}">Delete</a>
                                 </td>
                             </tr>
                             {% endfor %}

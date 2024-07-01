@@ -3,6 +3,9 @@ from config import Config
 from extensions import db, login_manager, ckeditor, bootstrap, gravatar, csrf, limiter
 from auth.routes import auth_bp
 from main.routes import main_bp
+from main.postroutes import post_bp
+from main.commentroutes import comment_bp
+from main.ratingroutes import rating_bp
 from models.models import UserBlog
 
 
@@ -21,7 +24,7 @@ def create_app():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return UserBlog.query.get(user_id)
+    return db.session.get(UserBlog, user_id)
 
 
 def register_extensions(flask_app):
@@ -37,6 +40,9 @@ def register_extensions(flask_app):
 def register_blueprints(flask_app):
     flask_app.register_blueprint(auth_bp)
     flask_app.register_blueprint(main_bp)
+    flask_app.register_blueprint(post_bp)
+    flask_app.register_blueprint(comment_bp)
+    flask_app.register_blueprint(rating_bp)
 
 
 app = create_app()

@@ -31,7 +31,7 @@
                 <div class="d-flex justify-content-end mb-4">
                     <a
                             class="btn btn-primary float-right"
-                            href="{{url_for('main.edit_post', post_id=post.id)}}"
+                            href="{{url_for('post.edit_post', post_id=post.id)}}"
                     >Edit Post</a
                     >
                 </div>
@@ -67,10 +67,10 @@
                                 <img src="{{ comment.comment_author.email | gravatar }}"/>
                             </div>
                             <div class="commentText">
-                                <a href="{{url_for('main.edit_comment', comment_id=comment.id)}}">{{comment.text|safe}}</a>
+                                <a href="{{url_for('comment.edit_comment', comment_id=comment.id)}}">{{comment.text|safe}}</a>
                                 {% if comment.author_id == current_user.id %}
                                 <a href="{{url_for('main.user')}}"><span class="date sub-text">{{comment.comment_author.name}}</span></a>
-                                <a href="{{url_for('main.delete_comment', comment_id=comment.id) }}">, to delete: ✘</a>
+                                <a href="{{url_for('comment.delete_comment', comment_id=comment.id) }}">, to delete: ✘</a>
                                 {% else %}
                                 <span class="date sub-text">{{comment.comment_author.name}}</span>
                                 {% endif %}

@@ -29,7 +29,7 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user)
-            return redirect(url_for('main.get_all_posts'))
+            return redirect(url_for('post.get_all_posts'))
         except IntegrityError:
             db.session.rollback()
             flash('Email already registered. Please log in.')
@@ -53,7 +53,7 @@ def login():
             return redirect(url_for('auth.login'))
         else:
             login_user(user)
-            return redirect(url_for('main.get_all_posts'))
+            return redirect(url_for('post.get_all_posts'))
     return render_template("login.html", form=form)
 
 
@@ -61,4 +61,4 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('main.get_all_posts'))
+    return redirect(url_for('post.get_all_posts'))
