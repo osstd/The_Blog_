@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
 from extensions import db, limiter
 from models.models import UserBlog
+from models.transactions import add, DatabaseError
 from .forms import RegisterForm, LoginForm
 from utils import sanitize_input, validate_email
 
@@ -21,19 +22,26 @@ def register():
 
         if not validate_email(email):
             flash('Invalid email format.')
-            return render_template("register.html", form=form)
+            return redirect(url_for('auth.register'))
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
         new_user = UserBlog(email=email, name=name, password=hashed_password)
+
         try:
-            db.session.add(new_user)
-            db.session.commit()
+            add(new_user)
             login_user(new_user)
             return redirect(url_for('post.get_all_posts'))
+
         except IntegrityError:
             db.session.rollback()
             flash('Email already registered. Please log in.')
             return redirect(url_for('auth.login'))
+
+        except DatabaseError as e:
+            flash(e.message, 'error')
+
+        finally:
+            return redirect(url_for('auth.register'))
     return render_template("register.html", form=form)
 
 

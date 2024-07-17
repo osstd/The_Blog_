@@ -1,5 +1,4 @@
-from flask import abort
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from extensions import db
 
 
@@ -9,16 +8,20 @@ class DatabaseError(Exception):
         super().__init__(self.message)
 
 
-def get_all(model):
+def get_all(model, page=None, per_page=None):
     try:
-        return db.session.query(model).all()
+        query = db.session.query(model)
+        if page and per_page:
+            query = query.paginate(page, per_page)
+        return query.all()
+
     except SQLAlchemyError as error:
         raise DatabaseError(f"Error retrieving all records from {model.__tablename__}: {str(error)}")
 
 
 def get_by_id(model, id_reference):
     try:
-        return db.session.get(model, id_reference) or abort(404)
+        return db.session.get(model, id_reference)
     except SQLAlchemyError as error:
         raise DatabaseError(f"Error retrieving record from {model.__tablename__}: {str(error)}")
 
@@ -43,6 +46,9 @@ def add(entry):
     try:
         db.session.add(entry)
         db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise
     except SQLAlchemyError as error:
         db.session.rollback()
         raise DatabaseError(f"Error adding record to {entry.__tablename__}: {str(error)}")
