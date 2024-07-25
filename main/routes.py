@@ -33,42 +33,42 @@ def about():
 def process_posting(user_id, user_allow):
     try:
         user_to_allow = get_by_id(model=UserBlog, id_reference=user_id)
-    except DatabaseError as e:
-        flash(e.message, 'error')
-        return redirect(url_for('main.permission'))
 
-    if user_allow == 1:
-        user_to_allow.add_post = True
+        if not user_to_allow:
+            flash('User record can not be retrieved', 'error')
+            return redirect(url_for('main.permission'))
 
-        msg = MIMEText(
-            f"Hello {user_to_allow.name},\nYour request to add posts has been accepted.\nYou can start adding "
-            f"posts. \nSincerely,\nThe Blog.", 'plain', 'utf-8')
-        msg['Subject'] = "Your request to post has been accepted."
+        if user_allow == 1:
+            user_to_allow.add_post = True
 
-        email_sent = asyncio.run(send_email_async(
-            message=msg, recepient_email=user_to_allow.email))
+            msg = MIMEText(
+                f"Hello {user_to_allow.name},\nYour request to add posts has been accepted.\nYou can start adding "
+                f"posts. \nSincerely,\nThe Blog.", 'plain', 'utf-8')
+            msg['Subject'] = "Your request to post has been accepted."
 
-        if not email_sent:
-            flash('Error sending update to recepient', 'error')
-        elif email_sent:
-            flash('User posting permission granted.', "success")
-    else:
-        user_to_allow.add_post = False
+            email_sent = asyncio.run(send_email_async(
+                message=msg, recepient_email=user_to_allow.email))
 
-        msg = MIMEText(
-            f"Hello {user_to_allow.name},\nPlease "
-            f"note that your request to add posts has been denied at this time. \nSincerely,\nThe Blog.", 'plain',
-            'utf-8')
-        msg['Subject'] = "Your request to post has been denied."
+            if not email_sent:
+                flash('Error sending update to recepient', 'error')
+            elif email_sent:
+                flash('User posting permission granted.', "success")
+        else:
+            user_to_allow.add_post = False
 
-        email_sent = asyncio.run(send_email_async(message=msg, recepient_email=user_to_allow.email))
+            msg = MIMEText(
+                f"Hello {user_to_allow.name},\nPlease "
+                f"note that your request to add posts has been denied at this time. \nSincerely,\nThe Blog.", 'plain',
+                'utf-8')
+            msg['Subject'] = "Your request to post has been denied."
 
-        if not email_sent:
-            flash('Error sending update to recepient', 'error')
-        elif email_sent:
-            flash('User has no pending requests.', 'warning')
+            email_sent = asyncio.run(send_email_async(message=msg, recepient_email=user_to_allow.email))
 
-    try:
+            if not email_sent:
+                flash('Error sending update to recepient', 'error')
+            elif email_sent:
+                flash('User has no pending requests.', 'warning')
+
         user_to_allow.request = False
         put()
     except DatabaseError as e:
@@ -81,11 +81,14 @@ def process_posting(user_id, user_allow):
 @admin_required
 def permission():
     try:
-        users = get_by_condition(model=UserBlog, condition=True)
-        return render_template('permission.html', users=users)
+        authors = get_by_condition(UserBlog, 'add_post', True)
+        users = get_by_condition(UserBlog, 'request', True)
+        return render_template('permission.html', users=users, authors=authors)
+    except ValueError as e:
+        flash(str(e), 'error')
     except DatabaseError as e:
         flash(e.message, 'error')
-        return redirect(url_for('main.error'))
+    return redirect(url_for('main.error'))
 
 
 @main_bp.route('/request-posting', methods=["GET", "POST"])

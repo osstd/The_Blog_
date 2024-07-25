@@ -39,7 +39,7 @@
                     {% endif %}
                     {% endif %}
                     {% if current_user.id==1 or post.author_id==current_user.id: %}
-                    <a href="{{url_for('post.delete_post', post_id=post.id) }}">✘</a>
+                    <a href="{{url_for('post.delete_post', post_id=post.id) }}" class="exec-tag">✘</a>
                     {% endif %}
                 </p>
             </div>

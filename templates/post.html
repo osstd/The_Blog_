@@ -70,7 +70,7 @@
                                 <a href="{{url_for('comment.edit_comment', comment_id=comment.id)}}">{{comment.text|safe}}</a>
                                 {% if comment.author_id == current_user.id %}
                                 <a href="{{url_for('main.user')}}"><span class="date sub-text">{{comment.comment_author.name}}</span></a>
-                                <a href="{{url_for('comment.delete_comment', comment_id=comment.id) }}">, to delete: ✘</a>
+                                <a href="{{url_for('comment.delete_comment', comment_id=comment.id) }}" class="exec-tag">, to delete: ✘</a>
                                 {% else %}
                                 <span class="date sub-text">{{comment.comment_author.name}}</span>
                                 {% endif %}

@@ -15,7 +15,6 @@ def create_app():
 
     register_extensions(flask_app)
     register_blueprints(flask_app)
-
     with flask_app.app_context():
         db.create_all()
 
@@ -48,4 +47,5 @@ def register_blueprints(flask_app):
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=Config.DEBUG)
+

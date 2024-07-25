@@ -24,13 +24,28 @@
             <h2>Post permission requests:</h2>
             <div>
                 <div>
-                    <p>The following user(s) have requested permission to post:</p>
+                    <p>The following user(s) have permission to post:</p>
+                    {% if authors: %}
+                    {% for author in authors: %}
+                    <ul>
+                        <li>Name: {{author.name}}, Email: {{author.email}}, Process: <a
+                                href="{{url_for('main.process_posting',user_id=author.id,user_allow=0)}}"
+                                class="exec-tag">Revoke</a>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div>
                     {% if users: %}
+                    <p>The following user(s) have requested permission to post:</p>
                     {% for user in users: %}
                     <ul>
                         <li>Name: {{user.name}}, Email: {{user.email}}, Process: <a
-                                href="{{url_for('main.process_posting',user_id=user.id,user_allow=1)}}">Allow</a> <a
-                                href="{{url_for('main.process_posting',user_id=user.id, user_allow=0)}}">Deny</a>
+                                href="{{url_for('main.process_posting',user_id=user.id,user_allow=1)}}"
+                                class="exec-tag">Allow</a> <a
+                                href="{{url_for('main.process_posting',user_id=user.id, user_allow=0)}}"
+                                class="exec-tag">Deny</a>
                         </li>
                     </ul>
                     {% endfor %}

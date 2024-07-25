@@ -33,7 +33,7 @@ include "header.html" %}
             </div>
             <div class="col-lg-8 col-md-10 mx-auto">
                 {{ ckeditor.load() }} {{ ckeditor.config(name='body') }} {{
-                render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+                render_form(form, novalidate=True, button_map={"submit": "primary"}, id="myForm") }}
             </div>
         </div>
     </div>

@@ -45,7 +45,9 @@ include "header.html" %}
             <ul>
                 {% for post in user.posts %}
                 <li><a href="{{ url_for('post.show_post', post_id=post.id) }}"> {{ post.title }} <a
-                        href="{{url_for('post.delete_post', post_id=post.id) }}">, to delete post: ✘</a> </a></li>
+                        href="{{url_for('post.delete_post', post_id=post.id) }}" class="exec-tag">, to delete post:
+                    ✘</a>
+                </a></li>
                 {% endfor %}
             </ul>
             {% else %}
@@ -84,12 +86,16 @@ include "header.html" %}
                             </tr>
                             <tr>
                                 <td class="text-center">
-                                    <a type="button" class="btn btn-warning"
+                                    <a type="button" class="btn btn-warning btn-sm"
                                        href="{{url_for('comment.edit_comment', comment_id=comment.id)}}">Edit</a>
                                 </td>
                                 <td class="text-center">
-                                    <a type="button" class="btn btn-danger"
-                                       href="{{url_for('comment.delete_comment', comment_id=comment.id) }}">Delete</a>
+                                    <form method="POST"
+                                          action="{{url_for('comment.delete_comment', comment_id=comment.id) }}"
+                                          class="delete-form comment-form my-1">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -123,12 +129,16 @@ include "header.html" %}
                             </tr>
                             <tr>
                                 <td>
-                                    <a type="button" class="btn btn-warning"
+                                    <a type="button" class="btn btn-warning btn-sm"
                                        href="{{url_for('rating.edit_rating', rating_id=rating.id)}}">Edit</a>
                                 </td>
                                 <td>
-                                    <a type="button" class="btn btn-danger"
-                                       href="{{url_for('rating.delete_rating', rating_id=rating.id) }}">Delete</a>
+                                    <form method="POST"
+                                          action="{{url_for('rating.delete_rating', rating_id=rating.id) }}"
+                                          class="delete-form rating-form my-1">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}
