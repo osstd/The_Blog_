@@ -4,11 +4,10 @@ from models.models import UserBlog
 from models.transactions import DatabaseError, get_by_id, get_by_condition, put
 from extensions import limiter
 from .forms import RequestForm
-from utils import verify_recaptcha, send_email_async, sanitize_input, validate_email, send_text
+from utils import verify_recaptcha, send_email_async, sanitize_input, validate_email, send_text, text_unsent
 from admin import admin_required
 from email.mime.text import MIMEText
 import asyncio
-
 
 main_bp = Blueprint('main', __name__)
 
@@ -106,21 +105,38 @@ def request_posting():
             return redirect(url_for('main.request_posting'))
 
         reason = sanitize_input(form.reason.data)
-        msg = MIMEText(f"Name: {current_user.name}\nEmail: {current_user.email}\nRequest:{reason}", 'plain',
-                       'utf-8')
-        msg['Subject'] = f"New Request to post on The Blog from {current_user.name}"
+
+        try:
+            msg = MIMEText(f"Name: {current_user.name}\nEmail: {current_user.email}\nRequest:{reason}", 'plain',
+                           'utf-8')
+            msg['Subject'] = f"New Request to post on The Blog from {current_user.name}"
+        except DatabaseError as e:
+            flash(f'Your request has not been submitted{e.message}', 'error')
+            return redirect(url_for('main.request_posting'))
 
         try:
             current_user.request = True
             put()
         except DatabaseError as e:
-            flash(e.message, 'error')
+            flash(f'Your request has not been submitted{e.message}', 'error')
             return redirect(url_for('main.request_posting'))
 
         asyncio.run(send_email_async(message=msg, recepient_email=None))
-        asyncio.run(send_text(message='You have a request to post pending.'))
 
-        flash('Your request has been submitted.', 'success')
+        try:
+            result = asyncio.run(send_text('You have a request to post pending.'))
+            if not result['success']:
+                text_unsent(
+                    MIMEText(f"An error occurred while sending a text notification:\n{result['error']}.\n Check logs.",
+                             'plain',
+                             'utf-8'))
+        except Exception as e:
+            text_unsent(
+                MIMEText(f"An error occurred while sending a text notification:\n{str(e)}.\n Check logs", 'plain',
+                         'utf-8'))
+
+        flash(f'Your request has been submitted', 'success')
+
         return redirect(url_for('main.request_posting'))
     return render_template('request.html', form=form, site_key=current_app.config['RECAPTCHA_SITE_KEY'])
 
